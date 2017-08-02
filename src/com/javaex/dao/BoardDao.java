@@ -364,4 +364,64 @@ public class BoardDao {
 		}
 		return list;
 	}
+	
+	public List<BoardVo> serach(String kwd) { // 1차적으로는 작성자, 
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		List<BoardVo> list = new ArrayList<BoardVo>();
+		
+		try {
+			//1. jdbc 드라이버 로딩
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			
+			//2. 커넥션 얻어오기
+			String url = "jdbc:oracle:thin:@localhost:1521:xe";
+			conn = DriverManager.getConnection(url, "webdb", "webdb");
+			
+			//3.sql문 준비 / 바인딩 /실행
+			String query = "select b.no, b.title, b.content,"
+					+ " b.hit, b.reg_date, b.user_no, u.name "
+					+"from users u, board b "
+					+"where u.no = b.user_no "
+					+"order by b.no desc";
+			pstmt = conn.prepareStatement(query);
+			rs = pstmt.executeQuery();
+			//4. 결과처리
+			while(rs.next()) {
+				int no = rs.getInt("no");
+				String title = rs.getString("title");
+				String content = rs.getString("content");
+				int hit = rs.getInt("hit");
+				String reg_date = rs.getString("reg_date");
+				int user_no = rs.getInt("user_no");
+				String name = rs.getString("name");
+				
+				BoardVo bvo = new BoardVo(no, title, content, hit, reg_date, user_no, name);
+				list.add(bvo);
+				/*
+				for(int i=0; i<list.size(); i++) {
+					vo.toString();
+				}*/
+			}
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			System.out.println("error:드라이버 로딩 실패 - "+e);
+		} catch (SQLException e) {
+			System.out.println("error : "+e);
+		} finally {
+			//5. 자원정리
+			try {
+				if(pstmt != null) {
+					pstmt.close();
+				}
+				if(conn != null) {
+					conn.close();
+				}
+			} catch (SQLException e) {
+				System.out.println("error : "+e);
+			}
+		}
+		return list;
+	}
 }
